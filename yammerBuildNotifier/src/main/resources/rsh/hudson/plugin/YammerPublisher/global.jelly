@@ -19,12 +19,12 @@
       static resources.
     -->
      
-    <f:entry title="Access Token" description="">
+    <f:entry title="Access Token" description="" help="${rootURL}/plugin/yammerBuildNotifier/help-global-accessTokenConfig.html">
     	<f:textbox field="accessToken" value="${descriptor.accessToken()}" />
     	<a href="https://www.yammer.com/oauth/authorize?oauth_token=${descriptor.requestAuthToken()}" target="_blank">Click here to get a new access token</a>
     </f:entry>
     
-    <f:entry title="Hudson URL" description="">
+    <f:entry title="Hudson URL" description="" help="${rootURL}/plugin/yammerBuildNotifier/help-global-hudsonUrlConfig.html">
     	<f:textbox field="hudsonUrl" value="${descriptor.hudsonUrl()}" />
     </f:entry>
     

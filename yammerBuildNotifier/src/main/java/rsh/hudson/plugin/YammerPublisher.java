@@ -87,7 +87,6 @@ public class YammerPublisher extends Publisher {
         	super(YammerPublisher.class);
         	// Load the saved configuration
         	load();
-        	initialseRequestAuthParameters();
         }
         
         private void initialseRequestAuthParameters(){
@@ -117,6 +116,7 @@ public class YammerPublisher extends Publisher {
         }
         
         public String requestAuthToken() {
+        	initialseRequestAuthParameters();
         	return requestAuthToken;
         }
         

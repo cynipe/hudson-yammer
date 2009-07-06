@@ -5,7 +5,7 @@
     See global.jelly for a general discussion about jelly script.
   -->
 
-  <f:entry title="Yammer Group">
+  <f:entry title="Yammer Group" help="${rootURL}/plugin/yammerBuildNotifier/help-project-yammerGroupConfig.html">
     <f:textbox field="yammerGroup" />
   </f:entry>
 </j:jelly>

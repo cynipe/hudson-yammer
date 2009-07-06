@@ -27,12 +27,12 @@ public class YammerUtils {
 	/**
 	 * The Yammer generated Key for this app.
 	 */
-	private static final String KEY = "31kJmOgiAH0btAGONINog";
+	private static final String KEY = "fmt7oIbz02rCn6fTlrgxEQ";
 
 	/**
 	 * The Yammer generated Secret for this app.
 	 */
-	private static final String SECRET = "tUIqe5BUDFAYOC2TGWT8uhCLD7SMBljHo3sOOHeAkT8";
+	private static final String SECRET = "4SjnsIFO9cyUCpU3u3TfZqSnVMhZ6vG1Dwwt0SvFg";
 
 	public static final String OAUTH_TOKEN = "oauth_token";
 
