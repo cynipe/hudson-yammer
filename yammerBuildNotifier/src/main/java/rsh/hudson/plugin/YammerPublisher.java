@@ -45,7 +45,6 @@ public class YammerPublisher extends Publisher {
 	/**
 	 * The id of the Yammer group to post the build result too.
 	 */
-	@SuppressWarnings("unused")
 	private String yammerGroupId;
 
 	/**

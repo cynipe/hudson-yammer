@@ -3,14 +3,20 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>rsh.hudson.plugin</groupId>
-	<artifactId>yammerBuildNotifier</artifactId>
+	<artifactId>yammer</artifactId>
 	<packaging>hpi</packaging>
-	<version>1.0-SNAPSHOT</version>
+	<version>0.3-SNAPSHOT</version>
+	<name>Yammer plugin</name>
+	<description>
+        Plugin for Hudson that adds posts to Yammer (https://www.yammer.com/) for build events.
+    </description>
+
 
 	<properties>
 		<!-- which version of Hudson is this plugin built against? -->
 		<hudson.version>1.300</hudson.version>
 	</properties>
+
 
 	<dependencies>
 		<dependency>
@@ -40,15 +46,6 @@
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
-		<!-- 
-		<dependency>
-			<groupId>jdom</groupId>
-			<artifactId>jdom</artifactId>
-			<version>1.0</version>
-			<type>jar</type>
-			<scope>compile</scope>
-		</dependency>
-		 -->
 	</dependencies>
 
 	<build>
@@ -56,7 +53,8 @@
 			Since new versions need to overwrite old versions, it's better not to
 			have version number in the .hpi file name.
 		-->
-		<finalName>${project.artifactId}</finalName>
+		<finalName>Yammer</finalName>
+
 		<defaultGoal>package</defaultGoal>
 		<plugins>
 			<plugin>

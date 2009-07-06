@@ -16,4 +16,6 @@ public class PluginImpl extends Plugin {
         // Register the Yammer publisher
         BuildStep.PUBLISHERS.add(YammerPublisher.DESCRIPTOR);
     }
+    
+    public static String DISPLAY_NAME = "Yammer Plugin";
 }
