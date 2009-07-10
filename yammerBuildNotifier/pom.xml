@@ -11,7 +11,7 @@
 	
 	<artifactId>yammer</artifactId>
 	<packaging>hpi</packaging>
-	<version>1.0.5-RELEASE</version>
+	<version>1.0.6-RELEASE</version>
 	<name>Yammer plugin</name>
 	<description>
         Plugin for Hudson that adds posts to Yammer (https://www.yammer.com/) for build events.
