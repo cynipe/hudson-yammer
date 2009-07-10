@@ -57,16 +57,6 @@ public class YammerUtils {
 	private static final String OAUTH_REQUEST_TOKEN_URL = "https://www.yammer.com/oauth/request_token";
 
 	/**
-	 * The Yammer generated Key for this app.
-	 */
-	private static final String KEY = "fmt7oIbz02rCn6fTlrgxEQ";
-
-	/**
-	 * The Yammer generated Secret for this app.
-	 */
-	private static final String SECRET = "4SjnsIFO9cyUCpU3u3TfZqSnVMhZ6vG1Dwwt0SvFg";
-
-	/**
 	 * Constant for oauth_token query string parameter name.
 	 */
 	public static final String OAUTH_TOKEN = "oauth_token";
@@ -83,11 +73,12 @@ public class YammerUtils {
 	 * @param token_secret
 	 * @return
 	 */
-	private static String oauth_headers(String token, String token_secret) {
+	private static String oauth_headers(String token, String token_secret,
+			String applicationKey, String applicationSecret) {
 		StringBuffer buff = new StringBuffer();
 		buff.append("OAuth realm=\"");
 		buff.append("\", oauth_consumer_key=\"");
-		buff.append(KEY);
+		buff.append(applicationKey);
 		buff.append("\", ");
 
 		if (token != null) {
@@ -99,7 +90,7 @@ public class YammerUtils {
 		buff.append("oauth_signature_method=\"");
 		buff.append("PLAINTEXT");
 		buff.append("\", oauth_signature=\"");
-		buff.append(SECRET);
+		buff.append(applicationSecret);
 		buff.append("%26");
 		if (token_secret != null) {
 			buff.append(token_secret);
@@ -123,13 +114,15 @@ public class YammerUtils {
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	public static Map<String, String> getRequestTokenParameters()
+	public static Map<String, String> getRequestTokenParameters(
+			String applicationKey, String applicationSecret)
 			throws ClientProtocolException, IOException {
 
 		HttpClient httpclient = new DefaultHttpClient();
 		try {
 			HttpPost httpost = new HttpPost(OAUTH_REQUEST_TOKEN_URL);
-			httpost.addHeader(AUTHORIZATION_HEADER, oauth_headers(null, null));
+			httpost.addHeader(AUTHORIZATION_HEADER, oauth_headers(null, null,
+					applicationKey, applicationSecret));
 
 			BufferedReader reader = getResponseReader(httpclient
 					.execute(httpost));
@@ -155,14 +148,16 @@ public class YammerUtils {
 	 */
 	public static Map<String, String> getAccessTokenParameters(
 			String requestAuthToken, String requestAuthSecret,
-			String accessToken) throws ClientProtocolException, IOException {
+			String accessToken, String applicationKey, String applicationSecret)
+			throws ClientProtocolException, IOException {
 
 		HttpClient httpclient = new DefaultHttpClient();
 		try {
 			HttpPost httpost = new HttpPost(OAUTH_ACCESS_TOKEN_URL
 					+ accessToken);
 			httpost.addHeader(AUTHORIZATION_HEADER, oauth_headers(
-					requestAuthToken, requestAuthSecret));
+					requestAuthToken, requestAuthSecret, applicationKey,
+					applicationSecret));
 
 			BufferedReader reader = getResponseReader(httpclient
 					.execute(httpost));
@@ -186,14 +181,16 @@ public class YammerUtils {
 	 * @throws IOException
 	 */
 	public static void sendMessage(String accessAuthToken,
-			String accessAuthSecret, String message, String group)
+			String accessAuthSecret, String message, String group,
+			String applicationKey, String applicationSecret)
 			throws ClientProtocolException, IOException {
 		HttpClient httpclient = new DefaultHttpClient();
 
 		try {
 			HttpPost httpPost = new HttpPost(YAMMER_API_V1_MESSAGES);
 			httpPost.addHeader(AUTHORIZATION_HEADER, oauth_headers(
-					accessAuthToken, accessAuthSecret));
+					accessAuthToken, accessAuthSecret, applicationKey,
+					applicationSecret));
 
 			List<NameValuePair> nvps = new ArrayList<NameValuePair>();
 			nvps.add(new BasicNameValuePair(MESSAGE_BODY_PARAM_NAME, message));
@@ -222,10 +219,12 @@ public class YammerUtils {
 	 * @throws IOException
 	 */
 	public static void sendMessage(String accessAuthToken,
-			String accessAuthSecret, String message)
-			throws ClientProtocolException, IOException {
+			String accessAuthSecret, String message, String applicationKey,
+			String applicationSecret) throws ClientProtocolException,
+			IOException {
 
-		sendMessage(accessAuthToken, accessAuthSecret, message, "");
+		sendMessage(accessAuthToken, accessAuthSecret, message, "",
+				applicationKey, applicationSecret);
 	}
 
 	/**
@@ -293,9 +292,9 @@ public class YammerUtils {
 	 */
 	@SuppressWarnings("unchecked")
 	public static String getGroupId(String accessAuthToken,
-			String accessAuthSecret, String groupName)
-			throws IllegalStateException, ClientProtocolException, IOException,
-			DocumentException {
+			String accessAuthSecret, String groupName, String applicationKey,
+			String applicationSecret) throws IllegalStateException,
+			ClientProtocolException, IOException, DocumentException {
 
 		HttpClient httpclient = new DefaultHttpClient();
 
@@ -310,7 +309,8 @@ public class YammerUtils {
 				HttpGet httpGet = new HttpGet(YAMMER_API_V1_GROUPS + "?page="
 						+ currentPage + "&letter=" + groupName.substring(0, 1));
 				httpGet.addHeader(AUTHORIZATION_HEADER, oauth_headers(
-						accessAuthToken, accessAuthSecret));
+						accessAuthToken, accessAuthSecret, applicationKey,
+						applicationSecret));
 
 				SAXReader reader = new SAXReader();
 				Document doc = reader.read(getResponseReader(httpclient
@@ -335,13 +335,15 @@ public class YammerUtils {
 		}
 	}
 
-	public static String createTinyUrl(String url) throws IllegalStateException, ClientProtocolException, IOException {
+	public static String createTinyUrl(String url)
+			throws IllegalStateException, ClientProtocolException, IOException {
 		HttpClient httpClient = new DefaultHttpClient();
 
 		try {
 			HttpGet httpGet = new HttpGet(TINYURL_URL + url.replace(" ", "%20"));
-			
-			BufferedReader reader = getResponseReader(httpClient.execute(httpGet));
+
+			BufferedReader reader = getResponseReader(httpClient
+					.execute(httpGet));
 
 			return reader.readLine();
 		} finally {

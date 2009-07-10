@@ -12,17 +12,75 @@
     so it should be straightforward to find them.
   -->
   <f:section title="Yammer Publisher">
-
+  	
     <!--
       optional @help points to the help document HTML. /plugin/yammer
       is mapped to our resources/ directory, so this is a convenient way to serve
       static resources.
     -->
-     
+    
+    <f:entry title="">
+		
+    </f:entry>
+    
+    <f:entry title="Authorized To Publish?" description="">
+		<p>In order for the plugin to be able to post messages to Yammer it must be running as an authorized Yammer application.</p>
+
+		<p>You can register a new application with Yammer <a href="https://www.yammer.com/client_applications/new" target="_blank">here</a>, or use an existing one.</p>
+		
+		<p>Once you have done that enter the application key and secret below, obtain an access token and click 'Get Access Keys'</p>
+    </f:entry>
+    
+    <f:entry title="">
+		
+    </f:entry>
+    
+    
+    <f:entry title="Yammer Application Key" description="" help="/plugin/yammer/help-global-hudsonUrlConfig.html">
+    	<f:textbox field="applicationKey" value="${descriptor.applicationKey()}" />
+    </f:entry>
+
+    <f:entry title="Yammer Application Secret" description="" help="/plugin/yammer/help-global-hudsonUrlConfig.html">
+    	<f:textbox field="applicationSecret" value="${descriptor.applicationSecret()}" />
+    </f:entry>
+	
+	<f:entry title="">
+		<div style="float:left">
+	    	<input type="button" onclick="validateButton('/descriptor/hudson.plugins.yammer.YammerPublisher/generateAccessTokenLink','applicationKey,applicationSecret',this)" class="yui-button" value="Generate Access Token Link">
+	    	</input>
+	    </div>	
+	    <div style="display:none;">
+			<img src="/static/04e09824/images/spinner.gif">
+			</img> 
+			Generating...
+		</div>
+		<div>
+		</div>
+    </f:entry>
+       		
     <f:entry title="Access Token" description="" help="/plugin/yammer/help-global-accessTokenConfig.html">
     	<f:textbox field="accessToken" value="${descriptor.accessToken()}" />
-    	<a href="https://www.yammer.com/oauth/authorize?oauth_token=${descriptor.requestAuthToken()}" target="_blank">Click here to get a new access token</a>
     </f:entry>
+    
+    <f:entry title="">
+		<div style="float:left">
+	    	<input type="button" onclick="validateButton('/descriptor/hudson.plugins.yammer.YammerPublisher/getAccessAuthParameters','accessToken',this)" class="yui-button" value="Get Access Keys">
+	    	</input>
+	    </div>	
+	    <div style="display:none;">
+			<img src="/static/04e09824/images/spinner.gif">
+			</img> 
+			Getting access keys...
+		</div>
+		<div>
+		</div>
+    </f:entry>
+		    
+		 
+	<f:entry title="">
+		
+    </f:entry>    
+	
     
     <f:entry title="Hudson URL" description="" help="/plugin/yammer/help-global-hudsonUrlConfig.html">
     	<f:textbox field="hudsonUrl" value="${descriptor.hudsonUrl()}" />

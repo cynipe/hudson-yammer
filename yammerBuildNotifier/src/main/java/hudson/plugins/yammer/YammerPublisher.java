@@ -1,5 +1,6 @@
 package hudson.plugins.yammer;
 
+import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.Build;
@@ -10,12 +11,16 @@ import hudson.tasks.Publisher;
 import java.io.IOException;
 import java.util.Map;
 
+import javax.servlet.ServletException;
+
 import net.sf.json.JSONObject;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.log4j.Logger;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
 
 /**
  * <p>
@@ -35,13 +40,11 @@ public class YammerPublisher extends Publisher {
 	protected static final Logger LOGGER = Logger
 			.getLogger(YammerPublisher.class.getName());
 
-	public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
-
 	/**
 	 * The name of the Yammer group to post the build result too.
 	 */
 	private String yammerGroup;
-	
+
 	/**
 	 * The id of the Yammer group to post the build result too.
 	 */
@@ -49,26 +52,30 @@ public class YammerPublisher extends Publisher {
 
 	/**
 	 * Get's called on saving the project specific config.
+	 * 
 	 * @param yammerGroup
 	 */
 	@SuppressWarnings("deprecation")
 	@DataBoundConstructor
 	public YammerPublisher(String yammerGroup) {
 		this.yammerGroup = yammerGroup;
-		try {
-			this.yammerGroupId = YammerUtils.getGroupId(DESCRIPTOR.accessAuthToken, DESCRIPTOR.accessAuthSecret, this.yammerGroup);
-		} catch (Exception e) {
-			LOGGER.error(e.getLocalizedMessage());
-			//throw new RuntimeException(e);
-		} 
+		if (this.yammerGroup != null & !this.yammerGroup.equals("")) {
+			try {
+				this.yammerGroupId = YammerUtils.getGroupId(
+						((DescriptorImpl) getDescriptor()).accessAuthToken,
+						((DescriptorImpl) getDescriptor()).accessAuthSecret,
+						this.yammerGroup,
+						((DescriptorImpl) getDescriptor()).applicationKey,
+						((DescriptorImpl) getDescriptor()).applicationSecret);
+			} catch (Exception e) {
+				LOGGER.error(e.getLocalizedMessage());
+				// throw new RuntimeException(e);
+			}
+		}
 	}
 
 	public String getYammerGroup() {
 		return this.yammerGroup;
-	}
-
-	public Descriptor<Publisher> getDescriptor() {
-		return DESCRIPTOR;
 	}
 
 	/*
@@ -81,10 +88,12 @@ public class YammerPublisher extends Publisher {
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
 			BuildListener listener) throws IOException {
 
+		DescriptorImpl descriptor = (DescriptorImpl) getDescriptor();
 		// Publish the build results to Yammer
-		YammerUtils.sendMessage(DESCRIPTOR.accessAuthToken,
-				DESCRIPTOR.accessAuthSecret,
-				createBuildMessageFromResults(build), this.yammerGroupId);
+		YammerUtils.sendMessage(descriptor.accessAuthToken,
+				descriptor.accessAuthSecret,
+				createBuildMessageFromResults(build), this.yammerGroupId,
+				descriptor.applicationKey, descriptor.applicationSecret);
 
 		return true;
 	}
@@ -96,14 +105,15 @@ public class YammerPublisher extends Publisher {
 	 * @return
 	 */
 	private String createBuildMessageFromResults(AbstractBuild<?, ?> build) {
-		String absoluteBuildURL = DESCRIPTOR.hudsonUrl + build.getUrl();
+		String absoluteBuildURL = ((DescriptorImpl) getDescriptor()).hudsonUrl
+				+ build.getUrl();
 		String tinyUrl = "";
-        try {
-            tinyUrl = YammerUtils.createTinyUrl(absoluteBuildURL);
-        } catch (Exception e) {
-            tinyUrl = "?";
-        }
-
+		try {
+			tinyUrl = YammerUtils.createTinyUrl(absoluteBuildURL);
+		} catch (Exception e) {
+			tinyUrl = "?";
+		}
+		
 		StringBuffer messageBuilder = new StringBuffer();
 		messageBuilder.append("Hudson Build Results - ");
 		messageBuilder.append(build.getFullDisplayName());
@@ -115,7 +125,20 @@ public class YammerPublisher extends Publisher {
 		return messageBuilder.toString();
 	}
 
+	@Extension
 	public static final class DescriptorImpl extends Descriptor<Publisher> {
+
+		/**
+		 * The key of the application registered with Yammer. See
+		 * http://www.yammer.com/client_applications/new
+		 */
+		private String applicationKey;
+
+		/**
+		 * The secret of the application registered with Yammer. See
+		 * http://www.yammer.com/client_applications/new
+		 */
+		private String applicationSecret;
 
 		/**
 		 * The Yammer request auth token used in getting the access token and
@@ -152,6 +175,30 @@ public class YammerPublisher extends Publisher {
 		 */
 		private String hudsonUrl;
 
+		public String getDisplayName() {
+			return "Publish results in Yammer";
+		}
+
+		public String accessToken() {
+			return accessToken;
+		}
+
+		public String hudsonUrl() {
+			return hudsonUrl;
+		}
+
+		public String applicationKey() {
+			return applicationKey;
+		}
+
+		public String applicationSecret() {
+			return applicationSecret;
+		}
+
+		public Boolean showAccessToken() {
+			return (this.applicationKey != null && this.applicationSecret != null);
+		}
+
 		public DescriptorImpl() {
 			super(YammerPublisher.class);
 			// Load the saved configuration
@@ -168,54 +215,11 @@ public class YammerPublisher extends Publisher {
 				throws ClientProtocolException, IOException {
 			Map<String, String> parametersMap;
 
-			parametersMap = YammerUtils.getRequestTokenParameters();
+			parametersMap = YammerUtils.getRequestTokenParameters(
+					this.applicationKey, this.applicationSecret);
 			this.requestAuthToken = parametersMap.get(YammerUtils.OAUTH_TOKEN);
 			this.requestAuthSecret = parametersMap
 					.get(YammerUtils.OAUTH_SECRET);
-		}
-
-		public String getDisplayName() {
-			return "Publish results in Yammer";
-		}
-
-		public String accessAuthToken() {
-			return accessAuthToken;
-		}
-
-		public String accessAuthSecret() {
-			return accessAuthSecret;
-		}
-
-		/**
-		 * Get's new request auth parameters every time to enure they are valid
-		 * i.e. not expired.
-		 * 
-		 * @return
-		 */
-		public String requestAuthToken() {
-			try {
-				initialseRequestAuthParameters();
-			} catch (Exception e) {
-				this.requestAuthSecret = "";
-				this.requestAuthToken = "";
-
-				LOGGER.error(e.getLocalizedMessage());
-				e.printStackTrace();
-			}
-
-			return requestAuthToken;
-		}
-
-		public String requestAuthSecret() {
-			return requestAuthSecret;
-		}
-
-		public String accessToken() {
-			return accessToken;
-		}
-
-		public String hudsonUrl() {
-			return hudsonUrl;
 		}
 
 		/*
@@ -230,17 +234,11 @@ public class YammerPublisher extends Publisher {
 				throws FormException {
 			// to persist global configuration information, set that to
 			// properties and call save().
-			String newAccessToken = o.getString("accessToken");
+			// String newAccessToken = o.getString("accessToken");
 			this.hudsonUrl = o.getString("hudsonUrl");
-
-			// If accessToken isnt blank and different to current saved one then
-			// get the authAccess params
-			if (!newAccessToken.equals("")
-					&& !newAccessToken.equals(this.accessToken)) {
-
-				this.accessToken = newAccessToken;
-				setAccessAuthParameters();
-			}
+			this.applicationKey = o.getString("applicationKey");
+			this.applicationSecret = o.getString("applicationSecret");
+			this.accessToken = o.getString("accessToken");
 
 			save();
 			return super.configure(req, o);
@@ -258,7 +256,8 @@ public class YammerPublisher extends Publisher {
 			try {
 				parametersMap = YammerUtils.getAccessTokenParameters(
 						this.requestAuthToken, this.requestAuthSecret,
-						this.accessToken);
+						this.accessToken, this.applicationKey,
+						this.applicationSecret);
 				this.accessAuthToken = parametersMap
 						.get(YammerUtils.OAUTH_TOKEN);
 				this.accessAuthSecret = parametersMap
@@ -267,6 +266,48 @@ public class YammerPublisher extends Publisher {
 				throw new FormException(e.getCause(), "accessToken");
 			}
 		}
+
+		public void doGenerateAccessTokenLink(
+				StaplerRequest req,
+				StaplerResponse rsp,
+				@QueryParameter("applicationKey") final String applicationKey,
+				@QueryParameter("applicationSecret") final String applicationSecret)
+				throws IOException, ServletException {
+
+			try {
+				this.applicationKey = applicationKey;
+				this.applicationSecret = applicationSecret;
+				initialseRequestAuthParameters();
+				save();
+				rsp
+						.getWriter()
+						.write(
+								"<a href='https://www.yammer.com/oauth/authorize?oauth_token="
+										+ this.requestAuthToken
+										+ "' target='_blank'>Click here to get a new access token</a>");
+			} catch (Exception e) {
+				LOGGER.error(e.getLocalizedMessage());
+				e.printStackTrace();
+			}
+		}
+
+		public void doGetAccessAuthParameters(StaplerRequest req,
+				StaplerResponse rsp,
+				@QueryParameter("accessToken") final String accessToken)
+				throws IOException, ServletException {
+
+			try {
+				this.accessToken = accessToken;
+				setAccessAuthParameters();
+				save();
+				rsp.getWriter().write("Success");
+			} catch (Exception e) {
+				LOGGER.error(e.getLocalizedMessage());
+				e.printStackTrace();
+				rsp.getWriter().write("Failed: " + e.getLocalizedMessage());
+			}
+		}
+
 	}
 
 }
