@@ -36,11 +36,11 @@
     </f:entry>
     
     
-    <f:entry title="Yammer Application Key" description="" help="/plugin/yammer/help-global-hudsonUrlConfig.html">
+    <f:entry title="Yammer Application Key" description="" help="/plugin/yammer/help-global-applicationKeyConfig.html">
     	<f:textbox field="applicationKey" value="${descriptor.applicationKey()}" />
     </f:entry>
 
-    <f:entry title="Yammer Application Secret" description="" help="/plugin/yammer/help-global-hudsonUrlConfig.html">
+    <f:entry title="Yammer Application Secret" description="" help="/plugin/yammer/help-global-applicationSecretConfig.html">
     	<f:textbox field="applicationSecret" value="${descriptor.applicationSecret()}" />
     </f:entry>
 	
