@@ -46,11 +46,11 @@
 	
 	<f:entry title="">
 		<div style="float:left">
-	    	<input type="button" onclick="validateButton('../publisher/YammerPublisher/generateAccessTokenLink','applicationKey,applicationSecret',this)" class="yui-button" value="Generate Access Token Link">
+	    	<input type="button" onclick="validateButton('${rootURL}/publisher/YammerPublisher/generateAccessTokenLink','applicationKey,applicationSecret',this)" class="yui-button" value="Generate Access Token Link">
 	    	</input>
 	    </div>	
 	    <div style="display:none;">
-			<img src="../static/04e09824/images/spinner.gif">
+			<img src="${rootURL}/images/spinner.gif">
 			</img> 
 			Generating...
 		</div>
@@ -64,11 +64,11 @@
     
     <f:entry title="">
 		<div style="float:left">
-	    	<input type="button" onclick="validateButton('../publisher/YammerPublisher/getAccessAuthParameters','accessToken',this)" class="yui-button" value="Get Access Keys">
+	    	<input type="button" onclick="validateButton('${rootURL}/publisher/YammerPublisher/getAccessAuthParameters','accessToken',this)" class="yui-button" value="Get Access Keys">
 	    	</input>
 	    </div>	
 	    <div style="display:none;">
-			<img src="../static/04e09824/images/spinner.gif">
+			<img src="${rootURL}/images/spinner.gif">
 			</img> 
 			Getting access keys...
 		</div>
