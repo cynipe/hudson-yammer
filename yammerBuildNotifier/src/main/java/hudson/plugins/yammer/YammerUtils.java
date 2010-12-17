@@ -1,5 +1,7 @@
 package hudson.plugins.yammer;
 
+import hudson.ProxyConfiguration;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,13 +14,17 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
@@ -118,11 +124,12 @@ public class YammerUtils {
 			String applicationKey, String applicationSecret)
 			throws ClientProtocolException, IOException {
 
-		HttpClient httpclient = new DefaultHttpClient();
+		HttpClient httpclient = getHttpClient();
 		try {
 			HttpPost httpost = new HttpPost(OAUTH_REQUEST_TOKEN_URL);
-			httpost.addHeader(AUTHORIZATION_HEADER, oauth_headers(null, null,
-					applicationKey, applicationSecret));
+			httpost.addHeader(
+					AUTHORIZATION_HEADER,
+					oauth_headers(null, null, applicationKey, applicationSecret));
 
 			BufferedReader reader = getResponseReader(httpclient
 					.execute(httpost));
@@ -151,13 +158,14 @@ public class YammerUtils {
 			String accessToken, String applicationKey, String applicationSecret)
 			throws ClientProtocolException, IOException {
 
-		HttpClient httpclient = new DefaultHttpClient();
+		HttpClient httpclient = getHttpClient();
 		try {
 			HttpPost httpost = new HttpPost(OAUTH_ACCESS_TOKEN_URL
 					+ accessToken);
-			httpost.addHeader(AUTHORIZATION_HEADER, oauth_headers(
-					requestAuthToken, requestAuthSecret, applicationKey,
-					applicationSecret));
+			httpost.addHeader(
+					AUTHORIZATION_HEADER,
+					oauth_headers(requestAuthToken, requestAuthSecret,
+							applicationKey, applicationSecret));
 
 			BufferedReader reader = getResponseReader(httpclient
 					.execute(httpost));
@@ -168,6 +176,27 @@ public class YammerUtils {
 		} finally {
 			httpclient.getConnectionManager().shutdown();
 		}
+	}
+
+	private static DefaultHttpClient getHttpClient() throws IOException {
+		DefaultHttpClient httpClient = new DefaultHttpClient();
+
+		ProxyConfiguration proxyConfiguration = ProxyConfiguration.load();
+		if (proxyConfiguration != null) {
+			httpClient.getCredentialsProvider().setCredentials(
+					new AuthScope(proxyConfiguration.name,
+							proxyConfiguration.port),
+					new UsernamePasswordCredentials(proxyConfiguration
+							.getUserName(), proxyConfiguration.getPassword()));
+
+			HttpHost proxy = new HttpHost(proxyConfiguration.name,
+					proxyConfiguration.port);
+
+			httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY,
+					proxy);
+		}
+
+		return httpClient;
 	}
 
 	/**
@@ -184,13 +213,14 @@ public class YammerUtils {
 			String accessAuthSecret, String message, String group,
 			String applicationKey, String applicationSecret)
 			throws ClientProtocolException, IOException {
-		HttpClient httpclient = new DefaultHttpClient();
 
+		HttpClient httpclient = getHttpClient();
 		try {
 			HttpPost httpPost = new HttpPost(YAMMER_API_V1_MESSAGES);
-			httpPost.addHeader(AUTHORIZATION_HEADER, oauth_headers(
-					accessAuthToken, accessAuthSecret, applicationKey,
-					applicationSecret));
+			httpPost.addHeader(
+					AUTHORIZATION_HEADER,
+					oauth_headers(accessAuthToken, accessAuthSecret,
+							applicationKey, applicationSecret));
 
 			List<NameValuePair> nvps = new ArrayList<NameValuePair>();
 			nvps.add(new BasicNameValuePair(MESSAGE_BODY_PARAM_NAME, message));
@@ -296,8 +326,7 @@ public class YammerUtils {
 			String applicationSecret) throws IllegalStateException,
 			ClientProtocolException, IOException, DocumentException {
 
-		HttpClient httpclient = new DefaultHttpClient();
-
+		HttpClient httpclient = getHttpClient();
 		try {
 			Integer currentPage = 1;
 			Integer responses = null;
@@ -308,9 +337,10 @@ public class YammerUtils {
 			while ((responses == null || responses != 0) && groupId == null) {
 				HttpGet httpGet = new HttpGet(YAMMER_API_V1_GROUPS + "?page="
 						+ currentPage + "&letter=" + groupName.substring(0, 1));
-				httpGet.addHeader(AUTHORIZATION_HEADER, oauth_headers(
-						accessAuthToken, accessAuthSecret, applicationKey,
-						applicationSecret));
+				httpGet.addHeader(
+						AUTHORIZATION_HEADER,
+						oauth_headers(accessAuthToken, accessAuthSecret,
+								applicationKey, applicationSecret));
 
 				SAXReader reader = new SAXReader();
 				Document doc = reader.read(getResponseReader(httpclient
@@ -337,8 +367,8 @@ public class YammerUtils {
 
 	public static String createTinyUrl(String url)
 			throws IllegalStateException, ClientProtocolException, IOException {
-		HttpClient httpClient = new DefaultHttpClient();
 
+		HttpClient httpClient = getHttpClient();
 		try {
 			HttpGet httpGet = new HttpGet(TINYURL_URL + url.replace(" ", "%20"));
 

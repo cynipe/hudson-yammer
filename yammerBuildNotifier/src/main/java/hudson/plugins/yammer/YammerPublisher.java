@@ -6,6 +6,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.Build;
 import hudson.model.BuildListener;
 import hudson.model.Descriptor;
+import hudson.model.Result;
 import hudson.tasks.Publisher;
 
 import java.io.IOException;
@@ -15,8 +16,9 @@ import javax.servlet.ServletException;
 
 import net.sf.json.JSONObject;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.log4j.Logger;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -37,8 +39,9 @@ import org.kohsuke.stapler.StaplerResponse;
  * @author Russell Hart
  */
 public class YammerPublisher extends Publisher {
-	protected static final Logger LOGGER = Logger
-			.getLogger(YammerPublisher.class.getName());
+
+	protected static final Log LOGGER = LogFactory.getLog(YammerPublisher.class
+			.getName());
 
 	/**
 	 * The name of the Yammer group to post the build result too.
@@ -49,6 +52,11 @@ public class YammerPublisher extends Publisher {
 	 * The id of the Yammer group to post the build result too.
 	 */
 	private String yammerGroupId;
+	
+	/**
+	 * A flag to indicate whether only build failures should be posted to Yammer.
+	 */
+	private Boolean postOnlyFailures;
 
 	/**
 	 * Get's called on saving the project specific config.
@@ -57,8 +65,10 @@ public class YammerPublisher extends Publisher {
 	 */
 	@SuppressWarnings("deprecation")
 	@DataBoundConstructor
-	public YammerPublisher(String yammerGroup) {
+	public YammerPublisher(String yammerGroup, Boolean postOnlyFailures) {
 		this.yammerGroup = yammerGroup;
+		this.postOnlyFailures = postOnlyFailures;
+		
 		if (this.yammerGroup != null & !this.yammerGroup.equals("")) {
 			try {
 				this.yammerGroupId = YammerUtils.getGroupId(
@@ -77,6 +87,10 @@ public class YammerPublisher extends Publisher {
 	public String getYammerGroup() {
 		return this.yammerGroup;
 	}
+	
+	public Boolean getPostOnlyFailures() {
+		return this.postOnlyFailures;
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -89,11 +103,13 @@ public class YammerPublisher extends Publisher {
 			BuildListener listener) throws IOException {
 
 		DescriptorImpl descriptor = (DescriptorImpl) getDescriptor();
-		// Publish the build results to Yammer
-		YammerUtils.sendMessage(descriptor.accessAuthToken,
-				descriptor.accessAuthSecret,
-				createBuildMessageFromResults(build), this.yammerGroupId,
-				descriptor.applicationKey, descriptor.applicationSecret);
+		// Publish the build results to Yammer if the build has failed
+		if (!this.postOnlyFailures || (this.postOnlyFailures && build.getResult() != Result.SUCCESS)) {
+			YammerUtils.sendMessage(descriptor.accessAuthToken,
+					descriptor.accessAuthSecret,
+					createBuildMessageFromResults(build), this.yammerGroupId,
+					descriptor.applicationKey, descriptor.applicationSecret);
+		}
 
 		return true;
 	}
@@ -113,7 +129,7 @@ public class YammerPublisher extends Publisher {
 		} catch (Exception e) {
 			tinyUrl = "?";
 		}
-		
+
 		StringBuffer messageBuilder = new StringBuffer();
 		messageBuilder.append("Hudson Build Results - ");
 		messageBuilder.append(build.getFullDisplayName());
