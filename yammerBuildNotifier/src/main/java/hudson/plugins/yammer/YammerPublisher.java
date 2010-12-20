@@ -2,11 +2,12 @@ package hudson.plugins.yammer;
 
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
 import hudson.model.Build;
 import hudson.model.BuildListener;
 import hudson.model.Descriptor;
 import hudson.model.Result;
+import hudson.model.AbstractBuild;
+import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 
 import java.io.IOException;
@@ -52,11 +53,11 @@ public class YammerPublisher extends Publisher {
 	 * The id of the Yammer group to post the build result too.
 	 */
 	private String yammerGroupId;
-	
+
 	/**
-	 * A flag to indicate whether only build failures should be posted to Yammer.
+	 * A flag to indicate which build results should be posted to Yammer.
 	 */
-	private Boolean postOnlyFailures;
+	private BuildResultPostOption buildResultPostOption;
 
 	/**
 	 * Get's called on saving the project specific config.
@@ -65,10 +66,11 @@ public class YammerPublisher extends Publisher {
 	 */
 	@SuppressWarnings("deprecation")
 	@DataBoundConstructor
-	public YammerPublisher(String yammerGroup, Boolean postOnlyFailures) {
+	public YammerPublisher(String yammerGroup,
+			BuildResultPostOption buildResultPostOption) {
 		this.yammerGroup = yammerGroup;
-		this.postOnlyFailures = postOnlyFailures;
-		
+		this.buildResultPostOption = buildResultPostOption;
+
 		if (this.yammerGroup != null & !this.yammerGroup.equals("")) {
 			try {
 				this.yammerGroupId = YammerUtils.getGroupId(
@@ -87,9 +89,9 @@ public class YammerPublisher extends Publisher {
 	public String getYammerGroup() {
 		return this.yammerGroup;
 	}
-	
-	public Boolean getPostOnlyFailures() {
-		return this.postOnlyFailures;
+
+	public BuildResultPostOption getBuildResultPostOption() {
+		return this.buildResultPostOption;
 	}
 
 	/*
@@ -103,8 +105,27 @@ public class YammerPublisher extends Publisher {
 			BuildListener listener) throws IOException {
 
 		DescriptorImpl descriptor = (DescriptorImpl) getDescriptor();
-		// Publish the build results to Yammer if the build has failed
-		if (!this.postOnlyFailures || (this.postOnlyFailures && build.getResult() != Result.SUCCESS)) {
+		boolean sendMessage = false;
+
+		switch (this.buildResultPostOption) {
+		case ALL:
+			sendMessage = true;
+			break;
+		case FAILURES_ONLY:
+			if (build.getResult() != Result.SUCCESS) {
+				sendMessage = true;
+			}
+			break;
+		case STATUS_CHANGE:
+			if (build.getResult() != build.getPreviousBuild().getResult()) {
+				sendMessage = true;
+			}
+			break;
+		}
+
+		// if (!this.postOnlyFailures || (this.postOnlyFailures &&
+		// build.getResult() != Result.SUCCESS)) {
+		if (sendMessage) {
 			YammerUtils.sendMessage(descriptor.accessAuthToken,
 					descriptor.accessAuthSecret,
 					createBuildMessageFromResults(build), this.yammerGroupId,
@@ -295,12 +316,10 @@ public class YammerPublisher extends Publisher {
 				this.applicationSecret = applicationSecret;
 				initialseRequestAuthParameters();
 				save();
-				rsp
-						.getWriter()
-						.write(
-								"<a href='https://www.yammer.com/oauth/authorize?oauth_token="
-										+ this.requestAuthToken
-										+ "' target='_blank'>Click here to get a new access token</a>");
+				rsp.getWriter()
+						.write("<a href='https://www.yammer.com/oauth/authorize?oauth_token="
+								+ this.requestAuthToken
+								+ "' target='_blank'>Click here to get a new access token</a>");
 			} catch (Exception e) {
 				LOGGER.error(e.getLocalizedMessage());
 				e.printStackTrace();
@@ -326,4 +345,23 @@ public class YammerPublisher extends Publisher {
 
 	}
 
+	public enum BuildResultPostOption {
+		ALL("Post all results"), FAILURES_ONLY("Post failures only"), STATUS_CHANGE(
+				"Post on status change");
+
+		private final String description;
+
+		BuildResultPostOption(String description) {
+			this.description = description;
+		}
+
+		public String description() {
+			return this.description;
+		}
+	}
+
+	@Override
+	public BuildStepMonitor getRequiredMonitorService() {
+		return BuildStepMonitor.BUILD;
+	}
 }

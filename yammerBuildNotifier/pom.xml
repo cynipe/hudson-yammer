@@ -5,13 +5,13 @@
 	<parent>
         <groupId>org.jvnet.hudson.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.314</version>
+        <version>1.386</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 	
 	<artifactId>yammer</artifactId>
 	<packaging>hpi</packaging>
-	<version>1.0.9-RELEASE</version>
+	<version>1.1.0-RELEASE</version>
 	<name>Yammer plugin</name>
 	<description>
         Plugin for Hudson that adds posts to Yammer (https://www.yammer.com/) for build events.
@@ -20,7 +20,7 @@
 
 	<properties>
 		<!-- which version of Hudson is this plugin built against? -->
-		<hudson.version>1.314</hudson.version>
+		<hudson.version>1.386</hudson.version>
 	</properties>
 
 

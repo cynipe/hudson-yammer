@@ -5,8 +5,8 @@
     See global.jelly for a general discussion about jelly script.
   -->
 
-  <f:entry title="Post Only Failures?" help="/plugin/yammer/help-project-postOnlyFailuresConfig.html">
-    <f:checkbox field="postOnlyFailures" />
+  <f:entry title="Post options" help="/plugin/yammer/help-project-postOptionsConfig.html">
+    <f:enum field="buildResultPostOption">${it.description()}</f:enum>
   </f:entry>
   
   <f:entry title="Yammer Group" help="/plugin/yammer/help-project-yammerGroupConfig.html">
