@@ -111,6 +111,11 @@ public class YammerPublisher extends Publisher {
 		case ALL:
 			sendMessage = true;
 			break;
+		case SUCCESS:
+			if (build.getResult() == Result.SUCCESS) {
+				sendMessage = true;
+			}
+			break;
 		case FAILURES_ONLY:
 			if (build.getResult() != Result.SUCCESS) {
 				sendMessage = true;
@@ -346,7 +351,7 @@ public class YammerPublisher extends Publisher {
 	}
 
 	public enum BuildResultPostOption {
-		ALL("Post all results"), FAILURES_ONLY("Post failures only"), STATUS_CHANGE(
+		ALL("Post all results"), SUCCESS("Post successes only"), FAILURES_ONLY("Post failures only"), STATUS_CHANGE(
 				"Post on status change");
 
 		private final String description;
