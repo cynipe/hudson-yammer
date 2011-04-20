@@ -135,6 +135,7 @@ public class YammerPublisher extends Publisher {
 					descriptor.accessAuthSecret,
 					createBuildMessageFromResults(build), this.yammerGroupId,
 					descriptor.applicationKey, descriptor.applicationSecret);
+			listener.getLogger().println("YammerNofier: Send notification to " + this.yammerGroup);
 		}
 
 		return true;
@@ -147,14 +148,10 @@ public class YammerPublisher extends Publisher {
 	 * @return
 	 */
 	private String createBuildMessageFromResults(AbstractBuild<?, ?> build) {
-		String absoluteBuildURL = ((DescriptorImpl) getDescriptor()).hudsonUrl
-				+ build.getUrl();
-		String tinyUrl = "";
-		try {
-			tinyUrl = YammerUtils.createTinyUrl(absoluteBuildURL);
-		} catch (Exception e) {
-			tinyUrl = "?";
-		}
+		String hudsonUrl = ((DescriptorImpl) getDescriptor()).hudsonUrl;
+		String absoluteBuildURL = hudsonUrl.endsWith("/")
+						? hudsonUrl + build.getUrl()
+						: hudsonUrl + "/" + build.getUrl();
 
 		StringBuffer messageBuilder = new StringBuffer();
 		messageBuilder.append("Hudson Build Results - ");
@@ -162,7 +159,7 @@ public class YammerPublisher extends Publisher {
 		messageBuilder.append(" ");
 		messageBuilder.append(build.getResult().toString());
 		messageBuilder.append(" ");
-		messageBuilder.append(tinyUrl);
+		messageBuilder.append(absoluteBuildURL);
 
 		return messageBuilder.toString();
 	}
