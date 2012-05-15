@@ -1,4 +1,5 @@
-
-# /yammerBuildNotifier/
-/yammerBuildNotifier/target
-/yammerBuildNotifier/work
+.classpath
+.settings
+.project
+target
+work
