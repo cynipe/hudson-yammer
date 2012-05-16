@@ -140,7 +140,8 @@ public class YammerPublisher extends Publisher {
 				}
 				break;
 			case STATUS_CHANGE:
-				if (build.getResult() != build.getPreviousBuild().getResult()) {
+				if (build.getPreviousBuild() == null
+						|| build.getResult() != build.getPreviousBuild().getResult()) {
 					sendMessage = true;
 				}
 				break;
