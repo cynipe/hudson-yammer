@@ -2,11 +2,10 @@ package hudson.plugins.yammer;
 
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.Build;
 import hudson.model.BuildListener;
-import hudson.model.Descriptor;
 import hudson.model.Result;
 import hudson.model.AbstractBuild;
+import hudson.model.Descriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 
@@ -79,7 +78,8 @@ public class YammerPublisher extends Publisher {
 						this.yammerGroup,
 						((DescriptorImpl) getDescriptor()).applicationKey,
 						((DescriptorImpl) getDescriptor()).applicationSecret);
-			} catch (Exception e) {
+			}
+			catch (Exception e) {
 				LOGGER.error(e.getLocalizedMessage());
 				// throw new RuntimeException(e);
 			}
@@ -101,6 +101,7 @@ public class YammerPublisher extends Publisher {
 	 * hudson.tasks.BuildStepCompatibilityLayer#perform(hudson.model.AbstractBuild
 	 * , hudson.Launcher, hudson.model.BuildListener)
 	 */
+	@Override
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
 			BuildListener listener) throws IOException {
 
@@ -108,24 +109,29 @@ public class YammerPublisher extends Publisher {
 		boolean sendMessage = false;
 
 		switch (this.buildResultPostOption) {
-		case ALL:
-			sendMessage = true;
-			break;
-		case SUCCESS:
-			if (build.getResult() == Result.SUCCESS) {
+			case ALL:
 				sendMessage = true;
-			}
-			break;
-		case FAILURES_ONLY:
-			if (build.getResult() != Result.SUCCESS) {
-				sendMessage = true;
-			}
-			break;
-		case STATUS_CHANGE:
-			if (build.getResult() != build.getPreviousBuild().getResult()) {
-				sendMessage = true;
-			}
-			break;
+				break;
+			case SUCCESS:
+				if (build.getResult() == Result.SUCCESS) {
+					sendMessage = true;
+				}
+				break;
+			case FAILURES_ONLY:
+				if (build.getResult() != Result.SUCCESS) {
+					sendMessage = true;
+				}
+				break;
+			case ABORTED_ONLY:
+				if (build.getResult() == Result.ABORTED) {
+					sendMessage = true;
+				}
+				break;
+			case STATUS_CHANGE:
+				if (build.getResult() != build.getPreviousBuild().getResult()) {
+					sendMessage = true;
+				}
+				break;
 		}
 
 		// if (!this.postOnlyFailures || (this.postOnlyFailures &&
@@ -150,8 +156,8 @@ public class YammerPublisher extends Publisher {
 	private String createBuildMessageFromResults(AbstractBuild<?, ?> build) {
 		String hudsonUrl = ((DescriptorImpl) getDescriptor()).hudsonUrl;
 		String absoluteBuildURL = hudsonUrl.endsWith("/")
-						? hudsonUrl + build.getUrl()
-						: hudsonUrl + "/" + build.getUrl();
+				? hudsonUrl + build.getUrl()
+				: hudsonUrl + "/" + build.getUrl();
 
 		StringBuffer messageBuilder = new StringBuffer();
 		messageBuilder.append("Hudson Build Results - ");
@@ -214,6 +220,7 @@ public class YammerPublisher extends Publisher {
 		 */
 		private String hudsonUrl;
 
+		@Override
 		public String getDisplayName() {
 			return "Publish results in Yammer";
 		}
@@ -301,7 +308,8 @@ public class YammerPublisher extends Publisher {
 						.get(YammerUtils.OAUTH_TOKEN);
 				this.accessAuthSecret = parametersMap
 						.get(YammerUtils.OAUTH_SECRET);
-			} catch (Exception e) {
+			}
+			catch (Exception e) {
 				throw new FormException(e.getCause(), "accessToken");
 			}
 		}
@@ -322,7 +330,8 @@ public class YammerPublisher extends Publisher {
 						.write("<a href='https://www.yammer.com/oauth/authorize?oauth_token="
 								+ this.requestAuthToken
 								+ "' target='_blank'>Click here to get a new access token</a>");
-			} catch (Exception e) {
+			}
+			catch (Exception e) {
 				LOGGER.error(e.getLocalizedMessage());
 				e.printStackTrace();
 			}
@@ -338,7 +347,8 @@ public class YammerPublisher extends Publisher {
 				setAccessAuthParameters();
 				save();
 				rsp.getWriter().write("Success");
-			} catch (Exception e) {
+			}
+			catch (Exception e) {
 				LOGGER.error(e.getLocalizedMessage());
 				e.printStackTrace();
 				rsp.getWriter().write("Failed: " + e.getLocalizedMessage());
@@ -348,8 +358,11 @@ public class YammerPublisher extends Publisher {
 	}
 
 	public enum BuildResultPostOption {
-		ALL("Post all results"), SUCCESS("Post successes only"), FAILURES_ONLY("Post failures only"), STATUS_CHANGE(
-				"Post on status change");
+		ALL("Post all results"),
+		SUCCESS("Post successes only"),
+		FAILURES_ONLY("Post failures only"),
+		ABORTED_ONLY("Post aborts only"),
+		STATUS_CHANGE("Post on status change");
 
 		private final String description;
 
