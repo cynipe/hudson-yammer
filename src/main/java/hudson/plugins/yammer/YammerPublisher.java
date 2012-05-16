@@ -122,6 +122,11 @@ public class YammerPublisher extends Publisher {
 					sendMessage = true;
 				}
 				break;
+			case ABORTED_ONLY:
+				if (build.getResult() == Result.ABORTED) {
+					sendMessage = true;
+				}
+				break;
 			case STATUS_CHANGE:
 				if (build.getResult() != build.getPreviousBuild().getResult()) {
 					sendMessage = true;
@@ -353,8 +358,11 @@ public class YammerPublisher extends Publisher {
 	}
 
 	public enum BuildResultPostOption {
-		ALL("Post all results"), SUCCESS("Post successes only"), FAILURES_ONLY("Post failures only"), STATUS_CHANGE(
-				"Post on status change");
+		ALL("Post all results"),
+		SUCCESS("Post successes only"),
+		FAILURES_ONLY("Post failures only"),
+		ABORTED_ONLY("Post aborts only"),
+		STATUS_CHANGE("Post on status change");
 
 		private final String description;
 
