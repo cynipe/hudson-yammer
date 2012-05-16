@@ -187,11 +187,11 @@ public class YammerPublisher extends Publisher {
 
 	private String peopleToNotifyText() {
 		if (StringUtils.isEmpty(getPeopleToNotify())) {
-			return null;
+			return "";
 		}
 		String[] ppl = getPeopleToNotify().replaceAll("\\s", "").split(",");
 		if (ppl.length == 0) {
-			return null;
+			return "";
 		}
 
 		StringBuilder sb = new StringBuilder();
