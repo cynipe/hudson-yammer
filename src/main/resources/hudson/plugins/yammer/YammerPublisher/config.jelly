@@ -12,5 +12,9 @@
   <f:entry title="Yammer Group" help="/plugin/yammer/help-project-yammerGroupConfig.html">
     <f:textbox field="yammerGroup" />
   </f:entry>
+  
+  <f:entry title="People to notify" help="/plugin/yammer/help-project-peopleToNotify.html">
+    <f:textbox field="peopleToNotify" />
+  </f:entry>
 </j:jelly>
 

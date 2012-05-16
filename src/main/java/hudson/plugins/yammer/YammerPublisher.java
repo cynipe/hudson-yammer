@@ -16,6 +16,7 @@ import javax.servlet.ServletException;
 
 import net.sf.json.JSONObject;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.client.ClientProtocolException;
@@ -59,14 +60,21 @@ public class YammerPublisher extends Publisher {
 	private BuildResultPostOption buildResultPostOption;
 
 	/**
+	 * People to notify
+	 */
+	private String peopleToNotify;
+
+	/**
 	 * Get's called on saving the project specific config.
 	 * 
 	 * @param yammerGroup
 	 */
 	@SuppressWarnings("deprecation")
 	@DataBoundConstructor
-	public YammerPublisher(String yammerGroup,
+	public YammerPublisher(String peopleToNotify,
+			String yammerGroup,
 			BuildResultPostOption buildResultPostOption) {
+		this.peopleToNotify = peopleToNotify;
 		this.yammerGroup = yammerGroup;
 		this.buildResultPostOption = buildResultPostOption;
 
@@ -84,6 +92,10 @@ public class YammerPublisher extends Publisher {
 				// throw new RuntimeException(e);
 			}
 		}
+	}
+
+	public String getPeopleToNotify() {
+		return this.peopleToNotify;
 	}
 
 	public String getYammerGroup() {
@@ -159,15 +171,34 @@ public class YammerPublisher extends Publisher {
 				? hudsonUrl + build.getUrl()
 				: hudsonUrl + "/" + build.getUrl();
 
-		StringBuffer messageBuilder = new StringBuffer();
+		StringBuilder messageBuilder = new StringBuilder();
 		messageBuilder.append("Hudson Build Results - ");
 		messageBuilder.append(build.getFullDisplayName());
 		messageBuilder.append(" ");
 		messageBuilder.append(build.getResult().toString());
 		messageBuilder.append(" ");
 		messageBuilder.append(absoluteBuildURL);
+		messageBuilder.append("\n");
+		messageBuilder.append(peopleToNotifyText());
 
 		return messageBuilder.toString();
+	}
+
+	private String peopleToNotifyText() {
+		if (StringUtils.isEmpty(getPeopleToNotify())) {
+			return null;
+		}
+		String[] ppl = getPeopleToNotify().replaceAll("\\s", "").split(",");
+		if (ppl.length == 0) {
+			return null;
+		}
+
+		StringBuilder sb = new StringBuilder();
+		for (String p : ppl) {
+			sb.append("@").append(p).append(", ");
+		}
+		sb.setLength(sb.length() - 2);
+		return sb.toString();
 	}
 
 	@Extension
